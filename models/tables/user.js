@@ -19,18 +19,24 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  date: {
-    type: Date,
-    default: Date.now
-  }, 
   profile_pic: { type: String, required: false, default: ""},
   cover_pic: { type: String, required: false, default : ""},
   followers : {type:Array, default : []},
   following : {type:Array, default : []},
-  isAdmin : {type:Boolean, default : false}
+  isAdmin : {type:Boolean, default : false},
+  description : {type:String, default:"", max:100},
+  city : {type:String, default:""},
+  
 },
-{
-    timestamps : true,
+{ toJSON: { 
+  virtuals: true,
+  transform: function (doc, ret) {
+    delete ret._id;
+    delete ret.password;
+    return ret;
+  }
+},
+timestamps : true
 }
 );
 

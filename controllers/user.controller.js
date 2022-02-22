@@ -1,42 +1,88 @@
-const User =  require("../models/tables/user.js");
 const bcrypt = require('bcrypt');
-exports.register = async (req, res)=>{
-    try {
-        var {name,username,email,password} = req.body;
-        //hash password
-        bcrypt.genSalt(10, function(err, salt) {
-            bcrypt.hash(password, salt, async function(err, hash) {
-                var a = {name,username,email,password};
-                a.password = hash;
-                console.log(a);
-                var user = await new User(a);
-                await user.save();
-                res.send(user);
-            });
-        });
+const User =  require("../models/tables/user.js");
 
-    } catch (error) {
-        console.log(error);
-        return res.json({error});
-    }
-   
+const hashPswrd = async (password)=>{
+    const salt = await bcrypt.genSalt(10);
+    var hash = await bcrypt.hash(password, salt);
+    return hash;
 }
 
-exports.login = async (req,res)=>{
-    var {email,password} = req.body;
-    const user = await User.findOne({email});
-    var pasRes  = false;
-    await bcrypt.compare(password, user.password,async function(err, result) {
-       console.log("result", result);
-       if(result){
-        delete user.password;
-        return res.json({user})
+exports.updateUser = async (req,res)=>{
+    if(req.body.userId == req.params.id || req.user.isAdmin){
+        if(req.body.password){
+            req.body.password = await hashPswrd(req.body.password);
         }
-        return res.json({error : "password or email dosen't match"});
-    });
-    
+        try {
+            const user = await User.findByIdAndUpdate(req.params.id, req.body) ;
+            console.log(user);
+            res.status(200).json({user});
+        } catch (error) {
+            res.status(500).json({error});
+        }
+    }else{
+        res.status(403).json({error : `Access denied !!!`})
+    }
+};
+
+exports.deleteUser = async (req,res)=>{
+    if(req.body.userId == req.params.id || req.user.isAdmin){
+        const deletedUser = await User.deleteOne({_id:req.params.id});
+        if(deletedUser.deletedCount < 1) return res.status(200).json("No user Found");
+        res.status(200).json("deleted user successfuly");
+    }else{
+        res.status(403).json({error:"acsess denied !!!"})
+    }
+}
+
+exports.getUser = async (req,res)=>{
+    try {
+        const user = await User.findById(req.params.id);
+        await delete user["password"];
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({error})
+    }
+}
+
+exports.followUser = async (req,res)=>{
+    if(req.body.userId != req.params.id){
+        try {
+            var curntUser=await User.findById(req.params.id);
+            if(!curntUser.following.includes(req.body.userId)){
+                await User.findByIdAndUpdate(req.params.id ,{ $push : {following : req.body.userId}});
+                await User.findByIdAndUpdate(req.body.userId, {$push : {followers : req.params.id}});
+                return res.status(200).json("user followed successfuly");
+            }
+            return res.status(403).json("You are already following this user")
+        } catch (error) {
+            return res.status(500).json(error)
+        }
+    }
+    res.status(403).json({error : "you can't follow this user"})
 
 }
+exports.unfollowUser = async (req,res)=>{
+    if(req.body.userId != req.params.id){
+        try {
+            var curntUser=await User.findById(req.params.id);
+            if(curntUser.following.includes(req.body.userId)){
+                await User.findByIdAndUpdate(req.params.id ,{ $pull : {following : req.body.userId}});
+                await User.findByIdAndUpdate(req.body.userId, {$pull : {followers : req.params.id}});
+                return res.status(200).json("user unfollowed successfuly");
+            }
+            return res.status(403).json("You don't following this user")
+        } catch (error) {
+            return res.status(500).json(error)
+        }
+    }
+    res.status(403).json({error : "you can't unfollow this user"})
+
+}
+
+exports.userPost = async (req,res)=>{
+    
+}
+
 
 
 module.exports = exports;
