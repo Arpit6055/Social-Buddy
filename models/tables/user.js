@@ -22,7 +22,7 @@ const UserSchema = new mongoose.Schema({
   profile_pic: { type: String, required: false, default: ""},
   cover_pic: { type: String, required: false, default : ""},
   followers : {type:Array, default : []},
-  following : {type:Array, default : []},
+  followings : {type:Array, default : []},
   isAdmin : {type:Boolean, default : false},
   description : {type:String, default:"", max:100},
   city : {type:String, default:""},

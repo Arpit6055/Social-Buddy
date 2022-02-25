@@ -47,8 +47,8 @@ exports.getUser = async (req,res)=>{
 exports.followUser = async (req,res)=>{
     if(req.body.userId != req.params.id){
         try {
-            await User.updateOne({_id:req.params.id} ,{ $addToSet : {following : req.body.userId}});
-            await User.updateOne({_id:req.body.userId}, {$addToSet : {followers : req.params.id}});
+            await User.updateOne({_id:req.params.id} ,{ $addToSet : {followers: req.body.userId}});
+            await User.updateOne({_id:req.body.userId}, {$addToSet : {followings: req.params.id}});
             return res.status(200).json("user followed successfuly");
         } catch (error) {
             return res.status(500).json(error)
