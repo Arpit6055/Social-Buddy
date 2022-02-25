@@ -23,4 +23,21 @@ exports.updatePost = async (req,res)=>{
     }
 }
 
+exports.likePost = async (req,res)=>{
+    if(req.body.userId){
+        try {
+            var a = "Liked";
+            var post = await Post.update({_id:req.params.id}, {$addToSet : {likes:`${req.body.userId}`}});
+            // if(post.upsertedCount == 0) post = await Post.updateOne({_id:req.params.id},{$pull : {likes:`${req.body.userId}`}}), a = "Unliked";
+            console.log(post);
+            return res.status(200).json(`${a} the post successfuly`);
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json("error occured");
+        }
+    }
+    res.status(403).json("access denied");
+
+}
+
 module.exports = exports;
